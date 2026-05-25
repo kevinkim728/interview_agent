@@ -7,27 +7,7 @@ import requests
 
 load_dotenv()
 
-app = FastAPI()
-
-@app.get('/')
-async def serve_html():
-    print("Serving HTML...")
-    return FileResponse('interview_agent.html')
-
-@app.get('/session')
-async def create_session():
-    try:
-        response = requests.post(
-            'https://api.openai.com/v1/realtime/client_secrets',
-            headers={
-                'Authorization': f'Bearer {os.getenv("OPENAI_API_KEY")}',
-                'Content-Type': 'application/json'
-            },
-            json={
-                'session': {
-                    'type': 'realtime',
-                    'model': 'gpt-realtime-2',
-                    'instructions': '''You are conducting a 10-15 minute screening interview for a professional position. Your goal is to assess communication skills, relevant experience, and basic qualifications before passing candidates to the hiring manager.
+INTERVIEW_PROMPT = '''You are conducting a 10-15 minute screening interview for a professional position. Your goal is to assess communication skills, relevant experience, and basic qualifications before passing candidates to the hiring manager.
 
 GREETING: The candidate will start by saying "Hello, I'm ready to start the interview." Always respond with exactly: "Hello! Thank you for your interest in our professional position. I'm here to conduct a brief screening interview with you today. Let's begin - tell me about your relevant work experience and what interests you about this role?"
 
@@ -59,7 +39,29 @@ CONVERSATION STYLE:
 - End interview when you have sufficient information or after 15 minutes
 
 
-Remember: This is a real interview that will be reviewed by a hiring manager. Treat the candidate professionally and give them a fair opportunity to showcase their qualifications.''',
+Remember: This is a real interview that will be reviewed by a hiring manager. Treat the candidate professionally and give them a fair opportunity to showcase their qualifications.'''
+
+app = FastAPI()
+
+@app.get('/')
+async def serve_html():
+    print("Serving HTML...")
+    return FileResponse('interview_agent.html')
+
+@app.get('/session')
+async def create_session():
+    try:
+        response = requests.post(
+            'https://api.openai.com/v1/realtime/client_secrets',
+            headers={
+                'Authorization': f'Bearer {os.getenv("OPENAI_API_KEY")}',
+                'Content-Type': 'application/json'
+            },
+            json={
+                'session': {
+                    'type': 'realtime',
+                    'model': 'gpt-realtime-2',
+                    'instructions': INTERVIEW_PROMPT,
                     'audio': {
                         'input': {
                             'turn_detection': {
