@@ -7,6 +7,8 @@ import requests
 
 load_dotenv()
 
+MODEL = 'gpt-realtime-mini'
+
 INTERVIEW_PROMPT = '''You are conducting a 10-15 minute screening interview for a professional position. Your goal is to assess communication skills, relevant experience, and basic qualifications before passing candidates to the hiring manager.
 
 GREETING: The candidate will start by saying "Hello, I'm ready to start the interview." Always respond with exactly: "Hello! Thank you for your interest in our professional position. I'm here to conduct a brief screening interview with you today. Let's begin - tell me about your relevant work experience and what interests you about this role?"
@@ -43,11 +45,13 @@ Remember: This is a real interview that will be reviewed by a hiring manager. Tr
 
 app = FastAPI()
 
+# Home page
 @app.get('/')
 async def serve_html():
     print("Serving HTML...")
     return FileResponse('interview_agent.html')
 
+# Creates the openAI session
 @app.get('/session')
 async def create_session():
     try:
@@ -60,13 +64,13 @@ async def create_session():
             json={
                 'session': {
                     'type': 'realtime',
-                    'model': 'gpt-realtime-2',
+                    'model': MODEL,
                     'instructions': INTERVIEW_PROMPT,
                     'audio': {
                         'input': {
                             'turn_detection': {
-                                'type': 'semantic_vad',
-                                'eagerness': 'auto'
+                                'type': 'semantic_vad', # figures out when the user is done talking
+                                'eagerness': 'low'
                             },
                             'noise_reduction': {
                                 'type': 'far_field'
