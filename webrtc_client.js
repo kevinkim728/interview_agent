@@ -1,9 +1,9 @@
 class RealtimeClient {
     constructor() {
         this.pc = null;
+        this.audioEl = null;
         this.dc = null;
-        this.stream = null;
         this.mediaRecorder = null;
-        this.audioChunks = [];
+        this.recordedChunks = [];
     }
 }
