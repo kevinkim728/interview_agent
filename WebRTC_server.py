@@ -9,8 +9,8 @@ from fastapi import UploadFile, File
 import subprocess
 import whisper
 from pyannote.audio import Pipeline
-import torch
 from job_config import JOB_DESCRIPTION
+from interview_analyzer import analyze_interview
 
 load_dotenv()
 
@@ -145,7 +145,6 @@ def create_labeled_transcript(whisper_result, diarization):
 
     for segment in segments:
         start_time = segment["start"]
-        end_time = segment["end"]
         text = segment["text"]
 
         speaker = "INTERVIEWER" if spk == interviewer else "CANDIDATE"
@@ -211,21 +210,58 @@ async def save_interview(audio: UploadFile = File(...)): # FastAPI executes this
             f.write(labeled_transcript)
 
 
+        print("🧠 Starting interview analysis...")
+        analysis = await analyze_interview(labeled_transcript)
+        print("✅ Analysis complete")
+
+        report_filename = f"interview_{timestamp}_report.txt"
+        report_path = os.path.join('interviews', report_filename)
+
+        report = f"""
+INTERVIEW ANALYSIS REPORT
+========================
+Timestamp: {timestamp}
+
+RECOMMENDATION: {analysis.recommendation}
+
+SCORES:
+- Communication: {analysis.communication_score:.1f}/1.0
+- Engagement: {analysis.engagement_score:.1f}/1.0
+- Specificity: {analysis.specificity_score:.1f}/1.0
+- Qualification: {analysis.qualification_score:.1f}/1.0
+
+SCORE BREAKDOWN:
+{analysis.score_breakdown}
+
+HIGHLIGHTS:
+{chr(10).join(f"• {h}" for h in analysis.highlights)}
+
+CONCERNS:
+{chr(10).join(f"⚠️ {c}" for c in analysis.concerns)}
+
+RED FLAGS:
+{chr(10).join(f"🚨 {flag}" for flag in analysis.red_flags)}
+
+SUMMARY:
+{analysis.summary}
+        """
+
+        with open(report_path, 'w') as f:
+            f.write(report)
+
+        if os.path.exists(webm_path):
+            os.remove(webm_path)
+            print(f"✅ Removed WebM file: {webm_filename}")
+
         return JSONResponse({
             "success": True,
             "audio_saved": webm_filename,
             "wav_created": wav_filename,
             "transcript_saved": labeled_transcript_filename,
+            "report_saved": report_filename,
             "transcript": labeled_transcript,
-            "message": "Audio saved, transcribed, diarized, and transcript saved"
-        })
-
-        return JSONResponse({
-            "success": True,
-            "audio_saved": webm_filename, # string of the webm file name
-            "wav_created": wav_filename, # string of the wev file name
-            "transcript": labeled_transcript, # transcript with diarization 
-            "message": "Audio saved, transcribed, and diarized"
+            "analysis": analysis.model_dump(),
+            "message": "Interview saved, transcribed, diarized, and analyzed"
         })
 
     except Exception as e:
