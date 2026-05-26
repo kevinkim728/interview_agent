@@ -161,25 +161,53 @@ class RealtimeClient {
     }
 
     async stopRecordingAndSave() {
-        return new Promise((resolve) => {
-            this.mediaRecorder.onstop = async () => {
+        return new Promise((resolve) => { // Promise object is created which is waiting for resolve() to be called
+            this.mediaRecorder.onstop = async () => { // Event handler that waits for .stop() to be called before running
                 const audioBlob = new Blob(this.recordedChunks, { type: 'audio/wav' });
                 await this.saveInterview(audioBlob);
-                resolve();
+                resolve(); // Ends the promise
             };
-            this.mediaRecorder.stop();
+            this.mediaRecorder.stop(); // triggers the onstop.
         });
     }
 
     async saveInterview(audioBlob) {
-        const formData = new FormData();
+        const formData = new FormData(); // FormData is a built-in browser class for sending files over HTTP — like an audio file
         formData.append('audio', audioBlob, 'interview.wav');
 
-        const response = await fetch('/save-interview', {
+        const response = await fetch('/save-interview', { 
             method: 'POST',
             body: formData
         });
 
         console.log("Interview saved:", await response.json());
+    }
+
+    async disconnect() {
+        console.log("🔌 Disconnecting...");
+
+        // Wait for recording to save before closing connections
+        if (this.mediaRecorder && this.mediaRecorder.state === 'recording') {
+            console.log("💾 Saving recording...");
+            await this.stopRecordingAndSave();  // Wait for this to complete
+            console.log("✅ Recording saved");
+        }
+
+        // Now safely close connections
+        if (this.dc) {
+            this.dc.close();
+            this.dc = null;
+        }
+        if (this.pc) {
+            this.pc.close();
+            this.pc = null;
+        }
+        if (this.audioEl) {
+            this.audioEl.srcObject = null;
+            this.audioEl.remove();
+            this.audioEl = null;
+        }
+
+        console.log("✅ Disconnected cleanly.");
     }
 }
