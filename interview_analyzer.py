@@ -1,5 +1,13 @@
 from pydantic import BaseModel, Field
 from typing import List
+from openai import AsyncOpenAI
+import os
+from dotenv import load_dotenv
+
+load_dotenv()
+
+client = AsyncOpenAI(api_key=os.getenv("OPENAI_API_KEY"))
+model = "gpt-4o-mini"
 
 ANALYZER_PROMPT = """You are a hiring manager analyzing a screening interview transcript. Evaluate the candidate critically and objectively — do not give credit for vague, generic, or rehearsed answers. Only reference what is actually in the transcript — do not invent or assume.
 
@@ -24,3 +32,15 @@ class InterviewAnalysis(BaseModel):
     recommendation: str = Field(description="Overall hiring recommendation: 'Strong Yes', 'Yes', 'Maybe', 'No', or 'Strong No'")
     summary: str = Field(description="2-3 sentence overall summary of the candidate's fit for the role")
     score_breakdown: str = Field(description="Explanation of what drove each score up or down. For each score, briefly note the specific moments or answers that influenced it.")
+
+async def analyze_interview(transcript: str) -> InterviewAnalysis:
+    response = await client.beta.chat.completions.parse(
+        model=model,
+        messages=[
+            {"role": "system", "content": ANALYZER_PROMPT},
+            {"role": "user", "content": f"Analyze this interview transcript:\n\n{transcript}"}
+        ],
+        response_format=InterviewAnalysis,
+    )
+
+    return response.choices[0].message.parsed
