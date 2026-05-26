@@ -6,6 +6,7 @@ import os
 import requests
 import time
 from fastapi import UploadFile, File
+import subprocess
 
 load_dotenv()
 
@@ -108,6 +109,25 @@ async def create_session(): # FastAPI executes this function automatically whene
         print(f"Exception: {e}")
         return JSONResponse({"error": str(e)}, status_code=500)
 
+def convert_webm_to_wav(webm_path):
+    wav_path = webm_path.replace('.webm', '.wav')
+
+    #Converts the recorded WebM audio file to a WAV file at 16kHz mono so Whisper can transcribe it.
+    try:
+        subprocess.run([ # allows python to run terminal commands. 
+            'ffmpeg', '-i', webm_path,
+            '-ar', '16000',
+            '-ac', '1',
+            '-y',
+            wav_path
+        ], check=True, capture_output=True, text=True)
+
+        return wav_path
+    except subprocess.CalledProcessError as e:
+        raise Exception(f"FFmpeg conversion failed: {e.stderr}")
+    except FileNotFoundError:
+        raise Exception("FFmpeg not found. Please install FFmpeg on your system.")
+
 @app.post('/save-interview')
 async def save_interview(audio: UploadFile = File(...)): # FastAPI executes this function automatically whenever a POST request is made
     try:
@@ -131,6 +151,8 @@ async def save_interview(audio: UploadFile = File(...)): # FastAPI executes this
     except Exception as e:
         print(f"❌ Error in save_interview: {str(e)}")
         return JSONResponse({"error": str(e)}, status_code=500)
+
+    
 
 @app.get('/{filename:path}')
 async def serve_static(filename: str):
