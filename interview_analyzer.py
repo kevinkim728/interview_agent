@@ -8,7 +8,7 @@ from job_config import JOB_DESCRIPTION
 load_dotenv()
 
 client = AsyncOpenAI(api_key=os.getenv("OPENAI_API_KEY"))
-model = "gpt-4o-mini"
+model = "gpt-5.4-mini"
 
 ANALYZER_PROMPT = f"""You are a hiring manager analyzing a screening interview transcript. Evaluate the candidate critically and objectively — do not give credit for vague, generic, or rehearsed answers. Only reference what is actually in the transcript — do not invent or assume.
 
@@ -23,6 +23,7 @@ ANALYSIS APPROACH:
 - Flag vague, generic, or unprepared answers as concerns
 - Concerns are doubts about fit; red flags are serious issues that could disqualify the candidate
 - Do not inflate scores, but a 1.0 is achievable for any candidate who meets the conditions described in each field
+- Do not penalize natural speech patterns such as filler words, false starts, or self-corrections — judge on the substance of what the candidate says, not how fluently they say it
 
 Your goal is to filter candidates fairly — not everyone is a good fit, but not everyone should be filtered out either. Approve candidates who genuinely demonstrate the qualifications for the role, and leave room for candidates who show strong potential even if they aren't a perfect match on paper."""
 

@@ -10,10 +10,19 @@ wheels/
 .venv/
 .env
 
+# Claude Code
+CLAUDE.md
+
 # Interview system specific
 interviews/
 *.webm
 *.wav
+
+# Reference and generated output files
+webrtc.txt
+client_secrets.txt
+tests/pass_rate_results.txt
+tests/llm_judge_output.txt
 
 # OS generated files
 .DS_Store
