@@ -1,4 +1,8 @@
-JOB_DESCRIPTION = """
+JOB_TITLE = "Generative AI Operations Prompt Engineer"
+JOB_DESCRIPTION = f""" 
+
+{JOB_TITLE}
+
 About the job
 Responsibilities
 About the Team 

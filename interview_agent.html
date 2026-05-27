@@ -203,14 +203,15 @@
         }
 
         async function disconnect() {
+            document.getElementById('disconnectBtn').disabled = true;
+            document.getElementById('status').textContent = 'Status: Interview Complete - Processing Results...';
+            document.getElementById('status').className = 'status disconnected';
+
             if (client) {
                 await client.disconnect();
             }
 
             document.getElementById('connectBtn').disabled = false;
-            document.getElementById('disconnectBtn').disabled = true;
-            document.getElementById('status').textContent = 'Status: Interview Complete - Processing Results...';
-            document.getElementById('status').className = 'status disconnected';
         }
     </script>
 </body>

@@ -9,7 +9,7 @@ from fastapi import UploadFile, File
 import subprocess
 import whisper
 from pyannote.audio import Pipeline
-from job_config import JOB_DESCRIPTION
+from job_config import JOB_DESCRIPTION, JOB_TITLE
 from interview_analyzer import analyze_interview
 
 load_dotenv()
@@ -19,7 +19,7 @@ whisper_model = whisper.load_model("base")
 print("Loading speaker diarization model...")
 diarization_pipeline = Pipeline.from_pretrained(
     "pyannote/speaker-diarization-3.1",
-    use_auth_token=os.getenv("HUGGINGFACE_TOKEN")
+    token=os.getenv("HUGGINGFACE_TOKEN")
 )
 print("✅ Diarization model loaded")
 
@@ -30,7 +30,7 @@ INTERVIEW_PROMPT = f'''JOB DESCRIPTION:
 
 You are conducting a 10-15 minute screening interview for a professional position. Your goal is to assess communication skills, relevant experience, and basic qualifications before passing candidates to the hiring manager.
 
-GREETING: The candidate will start by saying "Hello, I'm ready to start the interview." Always respond with exactly: "Hello! Thank you for your interest in our professional position. I'm here to conduct a brief screening interview with you today. Let's begin - tell me about your relevant work experience and what interests you about this role?"
+GREETING: The candidate will start by saying "Hello, I'm ready to start the interview." Always respond with exactly: "Hello! Thank you for your interest in our {JOB_TITLE} position. I'm here to conduct a brief screening interview with you today. Let's begin - tell me about your relevant work experience and what interests you about this role?"
 
 
 INTERVIEW STRUCTURE:
@@ -124,7 +124,7 @@ def create_labeled_transcript(whisper_result, diarization):
     labeled_parts = []
 
     interviewer = None
-    for turn, _, spk in diarization.itertracks(yield_label=True): # turn gets the time someone spoke, spk gets the speaker label
+    for turn, _, spk in diarization.speaker_diarization.itertracks(yield_label=True): # turn gets the time someone spoke, spk gets the speaker label
         interviewer = spk # gets the first speaker and assigns it to a the interviewer variable
         break
 
@@ -132,7 +132,7 @@ def create_labeled_transcript(whisper_result, diarization):
     if segments:
         first_text = segments[0]["text"].strip()
         if len(first_text) < 20:
-            for turn, _, spk in diarization.itertracks(yield_label=True): # Loop to see if the first speaker was the interviewr
+            for turn, _, spk in diarization.speaker_diarization.itertracks(yield_label=True): # Loop to see if the first speaker was the interviewr
                 if spk != interviewer:
                     interviewer = spk
                     break
@@ -142,7 +142,7 @@ def create_labeled_transcript(whisper_result, diarization):
         text = segment["text"]
 
         speaker = "INTERVIEWER" if spk == interviewer else "CANDIDATE"
-        for turn, _, spk in diarization.itertracks(yield_label=True):
+        for turn, _, spk in diarization.speaker_diarization.itertracks(yield_label=True):
             if turn.start <= start_time <= turn.end:
                 speaker = "INTERVIEWER" if spk == interviewer else "CANDIDATE"
                 break
