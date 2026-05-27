@@ -265,6 +265,8 @@ SUMMARY:
 
 @app.get('/{filename:path}')
 async def serve_static(filename: str):
+    if not os.path.exists(filename):
+        return JSONResponse({"error": "Not found"}, status_code=404)
     print(f"Serving file: {filename}")
     return FileResponse(filename)
 
