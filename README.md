@@ -8,6 +8,10 @@ An end-to-end AI interview system that:
 - Transcribes with Whisper, performs speaker diarization with pyannote, then labels speakers
 - Analyzes the conversation with the OpenAI API and generates a concise report
 
+## Demo
+
+[Watch a Live Demo](https://drive.google.com/file/d/106g4aZj-SWTZGSsTR6RgWrL7vaPqtVM9/view?usp=sharing)
+
 ## Architecture
 
 ```
